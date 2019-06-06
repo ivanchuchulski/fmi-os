@@ -1,12 +1,12 @@
 
-#include <sys/types.h>		//open(), lseek()
-#include <sys/stat.h>		//open()
-#include <fcntl.h>			//open()
-#include <unistd.h>			//close(), read(), write(), lseek()
-#include <err.h>			//err()
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <unistd.h>
+#include <err.h>
 #include <stdint.h>
 
-#include <stdio.h>			//printf()
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 

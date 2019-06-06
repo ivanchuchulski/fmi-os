@@ -1,17 +1,16 @@
 
-#include <stdio.h>			//printf()
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <unistd.h>
+#include <err.h>
 
-#include <sys/types.h>		//open(), lseek()
-#include <sys/stat.h>		//open()
-#include <fcntl.h>			//open()
-#include <unistd.h>			//close(), read(), write(), lseek()
-#include <err.h>			//err()
-
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
 //program implementing cp with two arguments
-//TODO : it doesnt mind if the dir is <dirname>/ or without the slash in the argument string
+//TODO : it doesnt mind if the dir is <dirname>/ or without the slash in the argument string, maybe its not a bug
 
 int main()
 {
