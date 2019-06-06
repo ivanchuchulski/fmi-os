@@ -1,30 +1,13 @@
 
-#include <stdio.h>			//printf()
 
-#include <sys/types.h>		//open(), lseek()
-#include <sys/stat.h>		//open()
-#include <fcntl.h>			//open()
-#include <unistd.h>			//close(), read(), write(), lseek()
-#include <err.h>			//err()
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <unistd.h>
+#include <err.h>
 
+#include <stdio.h>
 #include <stdlib.h>
-
-//system calls
-/*
-	int open(const char* pathaname, int flags, mode_t mode);
-	int close(int fd);
-	ssize_t read(int fd, void* buff, size_t count);
-	ssize_t write(int fd, const void* buff, size_t count);
-	off_t lseek(int fd, off_t offset, int whence);
-
-*/
-
-//library calls
-/*
-	int printf(const char* format, ...);
-	void errx(int eval, const char* fmt, ...);
-*/
-
 
 //program implementing cp
 
@@ -41,7 +24,7 @@ int main()
 		errx(10, "Could not open source file!\n");
 	}
 
-	fd_dest = open("bar.txt", O_CREAT | O_RDWR, S_IRWXU | S_IRWXG);
+	fd_dest = open("bar.txt", O_CREAT | O_RDWR, S_IRWXU | S_IRWXG, 0666);
 
 	if (fd_dest == -1)
 	{
