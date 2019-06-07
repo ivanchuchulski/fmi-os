@@ -17,20 +17,18 @@ const int WRITE = 1;
 
 int main()
 {
-	int p1[2];
-	int p2[2];
-	int p3[2];
-
-	pipe(p1);
-	pipe(p2);
-	pipe(p3);
-
 	pid_t cut_pid;
 	pid_t sort_pid;
 	pid_t uniq_pid;
 
+	int p1[2];
+	int p2[2];
+	int p3[2];
+
+	if ( pipe(p1) == -1 ) err(1, "error : pipe p1");
+
 	cut_pid = fork();
-	if (cut_pid == -1) errx(1, "error : fork cut");
+	if (cut_pid == -1) err(1, "error : fork cut");
 	if (cut_pid > 0)
 	{
 		//proc1, cut -d: -f7 /etc/passwd
@@ -39,10 +37,12 @@ int main()
 		if ( dup2(p1[WRITE], 1) == -1 ) err(1, "error : dup2 p1[WRITE] 1 cut");
 		if ( close(p1[WRITE]) == -1 ) err(1, "error : close p1[WRITE])");
 
-		if (execlp("cut", "cut", "-d:", "-f7", "/etc/passwd", (char*)NULL) == -1) err(1, "error : execlp cut");
+		if ( execlp("cut", "cut", "-d:", "-f7", "/etc/passwd", (char*)NULL) == -1 ) err(1, "error : execlp cut");
 	}
 
 	close(p1[WRITE]);
+
+	pipe(p2);
 
 	sort_pid = fork();
 	if (sort_pid == -1)	errx(1, "error : fork sort");
@@ -57,10 +57,12 @@ int main()
 		dup2(p1[READ], 0);
 		close(p1[READ]);
 
-		if (execlp("sort", "sort", "-", (char*)NULL) == -1) err(1, "error : execlp sort");	//- in sort means read from stdin
+		if (execlp("sort", "sort", (char*)NULL) == -1) err(1, "error : execlp sort");	//- in sort means read from stdin
 	}
 
 	close (p2[WRITE]);
+
+	pipe(p3);
 
 	uniq_pid = fork();
 	if (uniq_pid == -1) err(1, "error, fork uniq");
@@ -75,7 +77,7 @@ int main()
 		dup2(p3[WRITE], 1);
 		close(p3[WRITE]);
 
-		if (execlp("uniq", "uniq", "-c", (char*)NULL) == -1)  err(1, "error : execlp uniq -c");
+		if (execlp("uniq", "uniq", "-c", (char*)NULL) == -1) err(1, "error : execlp uniq -c");
 	}
 
 	//proc4, sort -n

@@ -4,6 +4,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <err.h>
+#include <errno.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -18,32 +19,33 @@ int main(int argc, char* argv[])
 {
 	if (argc != 3) errx(99, "error : arguments must be <file> <pattern>");
 
-	int p1[2];
-	int p2[2];
-
-	pipe(p1);
-	pipe(p2);
-
 	pid_t head_pid;
 	pid_t grep_pid;
 
+	int p1[2];
+	int p2[2];
+
+	if ( pipe(p1) == -1 ) err(1, "error : pipe p1");
+
 	head_pid = fork();
-	if (head_pid == -1) errx(1, "error : fork head");
+	if (head_pid == -1) err(1, "error : fork head");
 	if (head_pid > 0)
 	{
 		//proc1, head
-		close(p1[READ]);
+		if ( close(p1[READ]) == -1 ) err(1, "error : close p1[READ]");
 
-		dup2(p1[WRITE], 1);
-		close(p1[WRITE]);
+		if ( dup2(p1[WRITE], 1) == -1 ) err(1, "error : dup2 p1[WRITE]");
+		if ( close(p1[WRITE]) == -1 ) err(1, "error : close p1[WRITE]");
 
-		if (execlp("head", "head", argv[1], (char*)NULL) == -1) errx(1, "error : execlp head");
+		if ( execlp("head", "head", argv[1], (char*)NULL) == -1 ) err(1, "error : execlp head");
 	}
 
 	close(p1[WRITE]);
 
+	if ( pipe(p2) == -1 ) err(1, "error : pipe p2");
+
 	grep_pid = fork();
-	if (grep_pid == -1)	errx(1, "error : fork grep");
+	if (grep_pid == -1)	err(1, "error : fork grep");
 	if (grep_pid > 0)
 	{
 		//proc2, grep

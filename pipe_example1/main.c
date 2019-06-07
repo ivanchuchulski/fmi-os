@@ -4,6 +4,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <err.h>
+#include <errno.h>
 
 #include <stdio.h>			
 #include <stdlib.h>
@@ -36,7 +37,13 @@ int main(int argc, char* argv[])
 		dup2(p1[WRITE], 1);
 		close(p1[WRITE]);
 
-		if (execlp("echo", "echo", argv[1], (char*)NULL) == -1) err(1, "error : execlp echo");
+		if (execlp("echo", "echo", argv[1], (char*)NULL) == -1) 
+		{
+			const int saved_erro = errno;
+			close(output_fd);
+			errno = saved_erro;
+			err(1, "error : execlp echo");
+		}
 	}
 
 	//wc -c
@@ -49,5 +56,11 @@ int main(int argc, char* argv[])
 	dup2(output_fd, 1);
 	close(output_fd);
 
-	if (execlp("wc", "wc", "-c", (char*)NULL) == -1) err(1, "error : execlp wc -c");
+	if (execlp("wc", "wc", "-c", (char*)NULL) == -1)
+	{
+		const int saved_erro = errno;
+		close(output_fd);
+		errno = saved_erro;		
+		err(1, "error : execlp wc -c");
+	}
 }
