@@ -1,3 +1,5 @@
+// cut -d: -f7 /etc/passwd | sort | uniq -c | sort -n
+// the most used shells on the system
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -8,9 +10,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
-// cut -d: -f7 /etc/passwd | sort | uniq -c | sort -n
-// the most used shells on the system
 
 const int READ = 0;
 const int WRITE = 1;
@@ -40,51 +39,51 @@ int main()
 		if ( execlp("cut", "cut", "-d:", "-f7", "/etc/passwd", (char*)NULL) == -1 ) err(1, "error : execlp cut");
 	}
 
-	close(p1[WRITE]);
+	if ( close(p1[WRITE]) == -1 ) err(1, "error : close p1[1]");
 
-	pipe(p2);
+	if ( pipe(p2) == -1 ) err(1, "error : pipe p2");
 
 	sort_pid = fork();
-	if (sort_pid == -1)	errx(1, "error : fork sort");
+	if (sort_pid == -1)	err(1, "error : fork sort");
 	if (sort_pid > 0)
 	{	
-		//proc2, sort
-		close(p2[READ]);
-
-		dup2(p2[WRITE], 1);
-		close(p2[WRITE]);
-
-		dup2(p1[READ], 0);
+		if ( dup2(p1[READ], 0) == -1 ) err(1, "error : dup2 p1[0], 0");
 		close(p1[READ]);
+
+		//proc2, sort
+		if ( close(p2[READ]) == -1 ) err(1, "error : close p2[0]");
+
+		if ( dup2(p2[WRITE], 1) == -1 ) err(1, "error : dup2 p2[1], 1");
+		close(p2[WRITE]);
 
 		if (execlp("sort", "sort", (char*)NULL) == -1) err(1, "error : execlp sort");	//- in sort means read from stdin
 	}
 
-	close (p2[WRITE]);
+	if ( close (p2[WRITE]) == -1 ) err(1, "error : close p2[1]");
 
-	pipe(p3);
+	if ( pipe(p3) == -1 ) err(1, "error : pipe p3");
 
 	uniq_pid = fork();
 	if (uniq_pid == -1) err(1, "error, fork uniq");
 	if (uniq_pid > 0)
 	{
 		//proc3, uniq -c
-		dup2(p2[READ], 0);
-		close(p2[READ]);
+		if ( dup2(p2[READ], 0) == -1 ) err(1, "error : dup2 p2[0], 0");
+		if ( close(p2[READ]) == -1 ) err(1, "error : close p2[0]");
 
-		close(p3[READ]);
+		if ( close(p3[READ]) == -1 ) err(1, "error : close p3[0]");
 
-		dup2(p3[WRITE], 1);
-		close(p3[WRITE]);
+		if ( dup2(p3[WRITE], 1) == -1 ) err(1, "error : dup2 p3[1], 1");
+		if ( close(p3[WRITE]) == -1 ) err(1, "error : close p3[1]");
 
 		if (execlp("uniq", "uniq", "-c", (char*)NULL) == -1) err(1, "error : execlp uniq -c");
 	}
 
 	//proc4, sort -n
-	close(p3[WRITE]);
+	if ( close(p3[WRITE]) == -1 ) err(1, "error : close p3[1]");
 
-	dup2(p3[READ], 0);
-	close(p3[READ]);
+	if ( dup2(p3[READ], 0) == -1 ) err(1, "error : dup2 p3[0], 0");
+	if ( close(p3[READ]) == -1 ) err(1, "error : close p3[0]");
 
 	if (execlp ("sort", "sort", "-n", (char*)NULL) == -1) err(1, "error : execlp sort -n");	
 }

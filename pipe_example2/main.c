@@ -1,3 +1,4 @@
+// head argv[1] | grep argv[2] | wc -l 
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -10,14 +11,12 @@
 #include <stdlib.h>
 #include <string.h>
 
-// head argv[1] | grep argv[2] | wc -l 
-
 const int READ = 0;
 const int WRITE = 1;
 
 int main(int argc, char* argv[])
 {
-	if (argc != 3) errx(99, "error : arguments must be <file> <pattern>");
+	if (argc != 3) errx(1, "error : arguments must be <file> <pattern>");
 
 	pid_t head_pid;
 	pid_t grep_pid;
@@ -40,7 +39,7 @@ int main(int argc, char* argv[])
 		if ( execlp("head", "head", argv[1], (char*)NULL) == -1 ) err(1, "error : execlp head");
 	}
 
-	close(p1[WRITE]);
+	if ( close(p1[WRITE]) == -1 ) err(1, "error : close p1[1]");
 
 	if ( pipe(p2) == -1 ) err(1, "error : pipe p2");
 
@@ -49,24 +48,22 @@ int main(int argc, char* argv[])
 	if (grep_pid > 0)
 	{
 		//proc2, grep
-		dup2(p1[READ], 0);
-		close(p1[READ]);
+		if ( dup2(p1[READ], 0) == -1 ) err(1, "error : dup2 p1[0], 0");
+		if ( close(p1[READ]) == -1 ) err(1, "error : close p1[0]");
 
-		close(p2[READ]);
+		if ( close(p2[READ]) == -1 ) err(1, "error : close p2[0]");
 
-		dup2(p2[WRITE], 1);
-		close(p2[WRITE]);
+		if ( dup2(p2[WRITE], 1) == -1 ) err(1, "error : dup2 p2[1], 1");
+		if ( close(p2[WRITE]) == -1 ) err(1, "error : close p2[1]");
 
-		if (execlp("grep", "grep", argv[2], (char*)NULL) == -1) err(2, "error : execlp grep");
+		if (execlp("grep", "grep", argv[2], (char*)NULL) == -1) err(1, "error : execlp grep");
 	}
 
 	//proc3, wc -l
-	close(p2[WRITE]);
+	if ( close(p2[WRITE]) == -1 ) err(1, "error : close p2[1]");
 
-	dup2(p2[READ], 0);
-	close(p2[READ]);
+	if ( dup2(p2[READ], 0) == -1 ) err(1, "error : dup2 p2[0], 0");
+	if ( close(p2[READ]) == -1 ) err(1, "error : close p2[0]");
 
-	if (execlp("wc", "wc", "-l", (char*)NULL) == -1) err(3, "error : execlp wc -l");
-
-
+	if (execlp("wc", "wc", "-l", (char*)NULL) == -1) err(1, "error : execlp wc -l");
 }

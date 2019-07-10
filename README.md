@@ -1,1 +1,1 @@
-FMI OS C stuff
+tasks and exercises from the Operating Systems course in FMI
