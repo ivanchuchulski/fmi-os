@@ -1,2 +1,6 @@
- abc 
-abc d
+			if (buff == '\n')
+				rowcount++;
+		}
+
+	//	write (1, &buff, size_buff);
+	}
