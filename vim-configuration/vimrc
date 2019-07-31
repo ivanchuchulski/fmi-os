@@ -1,0 +1,31 @@
+" setting colorscheme
+colorscheme elflord
+
+" Enable syntax highlighting
+syntax on
+
+" show line numbers on the left
+set number
+"set relativenumber
+
+" Autoclose parentheses, brackets and quotes
+inoremap ( ()<Left>
+inoremap { {}<Left>
+inoremap [ []<Left>
+inoremap " ""<Left>
+
+" Enable use of the mouse for all modes
+set mouse=a
+
+" List command-line auto-completion suggestions
+set wildmenu
+
+" Enable 256-color mode
+set t_Co=256
+
+" Use case insensitive search, except when using capital letters
+set ignorecase
+set smartcase
+
+" Show current command in the bottom right corner when typed
+set showcmd
