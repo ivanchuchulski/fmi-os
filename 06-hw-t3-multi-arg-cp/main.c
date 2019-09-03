@@ -16,37 +16,40 @@
 
 int main(int argc, char* argv[])
 {
-	if (argc < 3) errx(1, "error : usage cp <file1>... <destname>");
+	if (argc < 3) errx(1, "error : not enough arguments\n\tusage : cp <file_name>... <dir_name>");
 
-	int src;
-	int dest;
-	char buff;
-	size_t size_buff = 1;
+	int src_fd;
+	int dest_fd;
+
+	size_t size_buff = 256;
+	char buff[size_buff];
 
 	const char* dirname = argv[argc - 1];
 
 	// check if the last argument is a directory
 	struct stat dir_stat;
+
 	if ( stat(dirname, &dir_stat) == -1 ) err(1, "error : stat %s", dirname);
 	if ( !S_ISDIR(dir_stat.st_mode) ) errx(1, "error : %s is not a directory", dirname);
 
-	for(int a = 1; a < argc - 1; a++)
+	for (int i = 1; i < argc - 1; i++)
 	{
+		char* sourcename = argv[i];
+		char* destname = NULL;
 
-		char* sourcename = argv[a];
+		src_fd = open(sourcename, O_RDONLY);
+		if (src_fd == -1) err(1, "error : open %s", sourcename);
 
-		src = open(sourcename, O_RDONLY);
-		if (src == -1) err(1, "error : open %s", sourcename);
+		int len = strlen(sourcename) + strlen(dirname);
 
-		int len = strlen(sourcename) + strlen(dirname); // not considering the \0
-
-		char* destname = (char*)malloc(len + 1);
+		destname = (char*)malloc(len + 1);
 
 		if (destname == NULL) 
 		{
 			const int saved_errno = errno;
-			close(src);
+			close(src_fd);
 			errno = saved_errno;
+
 			err(1, "error : malloc destname");
 		}
 
@@ -55,26 +58,56 @@ int main(int argc, char* argv[])
 		strcat(destname, dirname);
 		strcat(destname, "/");
 		strcat(destname, sourcename);
-
-		dest = open(destname,  O_CREAT | O_TRUNC | O_WRONLY, 0664);
-		if (dest == -1)
-		{
-			const int saved_errno = errno;
-			close(src);			
-			errno = saved_errno;
-			err(1, "error : open dest");
-		}
-
+		
 		// printf("destname is : %s\n", destname);
 
-		// reading from src and writing to dest
-		while (read(src, &buff, size_buff))
+		dest_fd = open(destname,  O_CREAT | O_TRUNC | O_WRONLY, 0664);
+		if (dest_fd == -1)
 		{
-			write(dest, &buff, size_buff);
+			const int saved_errno = errno;
+			close(src_fd);			
+			errno = saved_errno;
+
+			err(1, "error : open dest_fd");
 		}
 
-		if ( close(src) == -1 ) err(1, "error : close %s", sourcename);
-		if ( close(dest) == -1 ) err(1, "error : close %s", destname);
+
+		ssize_t read_size = 0;
+		while ( (read_size = read(src_fd, &buff, size_buff)) != 0 )
+		{
+			if (read_size == -1)
+			{
+				const int saved_errno = errno;
+				close(src_fd);
+				close(dest_fd);		
+				errno = saved_errno;
+
+				err(1, "eror : read %s", sourcename);
+			}
+
+			if ( write(dest_fd, &buff, read_size) == -1)
+			{
+				const int saved_errno = errno;
+				close(src_fd);
+				close(dest_fd);		
+				errno = saved_errno;
+
+				err(1, "eror : write %s", destname);				
+			}
+		}
+
+		if ( close(src_fd) == -1 ) 
+		{
+			close(dest_fd);
+			err(1, "error : close %s", sourcename);
+		}
+
+
+		if ( close(dest_fd) == -1 )
+		{
+			err(1, "error : close %s", destname);
+		}
+
 		free(destname);
 	}
 
