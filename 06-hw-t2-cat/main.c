@@ -10,44 +10,63 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#define STDOUT 1
+
 int main(int argc, char* argv[])
 {	
 	if (argc < 2)
 	{ 
-		errx(1, "Error : at least 1 argument is needed!\n");
+		errx(1, "error : at least 1 argument is needed\n\tusage : cat <file_name>...");
 	}
 
 	int fd;
-	char buff;
-	size_t size_buff = 1;
+
+	size_t size_buff = 256;
+	char buff[size_buff];
 
 	for (int i = 1; i < argc; i++)
 	{
-		const char* current = argv[i];
+		const char* current_argv = argv[i];
 		
 		struct stat s;
-		if ( stat(current, &s) == -1 ) err(1, "error : stat %s", current);
-		if ( !S_ISREG(s.st_mode) ) err(1, "error : %s is not a regular file", current);
 
-		fd = open(current, O_RDONLY);
+		if ( stat(current_argv, &s) == -1 ) err(1, "error : stat %s", current_argv);
+		if ( !S_ISREG(s.st_mode) ) err(1, "error : %s is not a regular file", current_argv);
+
+		fd = open(current_argv, O_RDONLY);
 
 		if (fd == -1)
 		{
-			err(1, "could not open file!");
+			err(1, "error : open %s", current_argv);
 		}
 
-		while (read(fd, &buff, size_buff))
+		ssize_t read_size = 0;
+		while ( (read_size = read(fd, &buff, size_buff)) != 0 )
 		{
-			write(1, &buff, size_buff);		//here the first 1 denotes standart output
+			if (read_size == -1)
+			{
+				const int saved_errno = errno;
+				close(fd);
+				errno = saved_errno;
+
+				err(1, "error : read %s", current_argv);
+			}
+
+			if ( write(STDOUT, &buff, read_size) == -1 )
+			{
+				const int saved_errno = errno;
+				close(fd);
+				errno = saved_errno;
+
+				err(1, "error : write STDOUT");
+			}
 		}
 
 		if (close(fd) == -1)
 		{
-			err(1, "close %s", current);
+			err(1, "error : close %s", current_argv);
 		}
 	}
-
-//	printf("\n");
 
 	exit(0);
 }
