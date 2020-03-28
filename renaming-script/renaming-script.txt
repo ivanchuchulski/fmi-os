@@ -1,0 +1,18 @@
+for f in *; do git mv $f $(echo $f | tr '_' '-'); done
+
+for f in *; do mv $f $(echo $f | tr 'A-Z 'a-z'); done
+
+for f in HackerRankHW*; do git mv $f $(echo $f | tail -c+11 | tr 'A-Z' 'a-z');done
+
+
+for file in $(git ls-files | egrep 'sda'); do git mv $file $(echo $file | sed -e 's/_/-/'g | sed -e 's/sda/dsa/'); done
+    for file in $(git ls-files | egrep 'sda'); do git mv $file $(echo $file | sed -e 's/sda/dsa/'); done
+
+for file in $(git ls-files | egrep 'dsa-k'); do git mv $file $(echo $file | sed -e 's/dsa-k/dsa-exam/'); done
+    for file in $(git ls-files | egrep 'dsa-k'); do $(echo $file | sed -e 's/dsa-k/dsa-exam/'); done
+
+for file in $(git ls-files | egrep 'dsa-exam'); do git mv $file $(echo $file | sed -e 's/dsa-exam/dsa-final-exam/'); done
+
+for file in *; do mv $file $(echo $file | sed -e 's/Week /pract-/'g'); done
+
+for file in $(git ls-files | egrep '06'); do git mv $file $(echo 'c-system-programming'); done
