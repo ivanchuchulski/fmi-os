@@ -53,7 +53,7 @@ int main(int argc, char const *argv[])
     pthread_t depositors[depositors_count];
 
     // init balance and balance_mutex
-    balance = 100;
+    balance = 150;
     if (pthread_mutex_init(&balance_mutex, NULL)) 
     {
         errx(2, "error : creation of balance_mutex failed\n");
@@ -72,14 +72,14 @@ int main(int argc, char const *argv[])
         banker->id = withdraw_index;
         pthread_create(&withdrawers[withdraw_index], NULL, withdraw, (void*)banker);
     }
-    
+
     for (int deposit_index = 1; deposit_index <= depositors_count; deposit_index++)
     {
         struct banker* banker = malloc(sizeof(struct banker));
         banker->id = deposit_index;
         pthread_create(&depositors[deposit_index], NULL, deposit, (void*)banker);
     }
-    
+
     for (int withdraw_index = 1; withdraw_index <= withdrawers_count; withdraw_index++)
     {
         pthread_join(withdrawers[withdraw_index], NULL);
@@ -111,27 +111,29 @@ void* withdraw(void* arg) {
     
     while (transactions_count < MAX_NUMBER_OF_TRANSACTIONS)
     {
-        pthread_mutex_lock(&stop_mutex);
-            if (stop)
-            {
-                free(banker);
-                pthread_mutex_unlock(&stop_mutex);
-                return NULL;
-            }
-        pthread_mutex_unlock(&stop_mutex);
-
-
         pthread_mutex_lock(&balance_mutex);
+            pthread_mutex_lock(&stop_mutex);
+                if (stop)
+                {
+                    free(banker);
+                    pthread_mutex_unlock(&stop_mutex);
+                    pthread_mutex_unlock(&balance_mutex);
+                    return NULL;
+                }
+            pthread_mutex_unlock(&stop_mutex);
+
             if ((balance - TRANSACTION_AMMOUNT) < 0) 
             {
-                stop = true;
-                free(banker);
+                pthread_mutex_lock(&stop_mutex);
+                    stop = true;
+                    free(banker);
+                pthread_mutex_unlock(&stop_mutex);
                 pthread_mutex_unlock(&balance_mutex);
                 return NULL;
             }
             else
             {
-                sleep(1);
+                sleep(2);
                 balance -= TRANSACTION_AMMOUNT;
             }            
 
@@ -153,17 +155,18 @@ void* deposit(void* arg) {
     
     while (transactions_count < MAX_NUMBER_OF_TRANSACTIONS)
     {
-        pthread_mutex_lock(&stop_mutex);
-            if (stop)
-            {
-                free(banker);
-                pthread_mutex_unlock(&stop_mutex);
-                return NULL;
-            }
-        pthread_mutex_unlock(&stop_mutex);
-
         pthread_mutex_lock(&balance_mutex);
-            sleep(1);
+            pthread_mutex_lock(&stop_mutex);
+                if (stop)
+                {
+                    free(banker);
+                    pthread_mutex_unlock(&stop_mutex);
+                    pthread_mutex_unlock(&balance_mutex);
+                    return NULL;
+                }
+            pthread_mutex_unlock(&stop_mutex);
+
+            sleep(2);
             balance += TRANSACTION_AMMOUNT;
         pthread_mutex_unlock(&balance_mutex);
 
@@ -176,14 +179,3 @@ void* deposit(void* arg) {
 
     return NULL;
 }
-
-
-// with ./main 1 2 
-// this could happen
-// techniclally the balance doesn't become negative
-
-// banker_withdraw 1 withdrew $50 from the bank
-// banker_withdraw 1 withdrew $50 from the bank
-// banker_deposit 1 deposited $50 to the bank
-// banker_deposit 2 deposited $50 to the bank
-// bancrupt : remaining money : 100

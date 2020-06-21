@@ -12,9 +12,9 @@ foo: main.o
 	$(CC) $(CFLAGS) -o main main.c 
 
 clean:
-	$(RM) $(OBJS) main alternative alternative.o
+	$(RM) $(OBJS) main wrong wrong.o
 
 bar: alternative.o
-	$(CC) $(CFLAGS) -o alternative alternative.c 
+	$(CC) $(CFLAGS) -o wrong wrong.c 
 
 
