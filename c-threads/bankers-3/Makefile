@@ -1,0 +1,20 @@
+ifndef CC
+	CC=gcc
+endif
+CFLAGS=-std=c11 -Werror -Wall -Wpedantic -Wextra -pthread
+SRCS=main.c
+OBJS=$(subst .c,.o,$(SRCS))
+RM=rm -f
+
+# all: main
+
+foo: main.o
+	$(CC) $(CFLAGS) -o main main.c 
+
+clean:
+	$(RM) $(OBJS) main alternative alternative.o
+
+bar: alternative.o
+	$(CC) $(CFLAGS) -o alternative alternative.c 
+
+
