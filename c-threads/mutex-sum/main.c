@@ -26,7 +26,7 @@ int main()
     result->result = 0;
 
     if (pthread_mutex_init(&result->mutex, NULL)) {
-         errx(2, "error : creation of first thread failed\n");
+         errx(2, "error : mutex init failed\n");
     }
 
     if (pthread_create(&firstHalf, NULL, sumFirstHalf, result)) {
@@ -34,7 +34,7 @@ int main()
     }   
 
     if (pthread_create(&secondHalf, NULL, sumSecondHalf, result)) {
-        errx(3, "error : creation of first thread failed\n");
+        errx(3, "error : creation of second thread failed\n");
     }  
 
     if (pthread_join(firstHalf, NULL)) {
