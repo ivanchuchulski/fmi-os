@@ -29,42 +29,48 @@ int main(int argc, char const *argv[])
     int withdrawers_count;
     int depositors_count;
 
-    if (strcmp(argv[1], "-h") == 0) 
-    {
-        printf("showing help : expected arguments  : [#DEPOSITORS, #WITHDRAWERS]\n");
-        exit(1);
-    }
-
     if (argc == 3) 
     { 
         withdrawers_count = atoi(argv[1]);
         depositors_count = atoi(argv[2]);
     }
+    else if (argc == 2)
+    {
+        if (strcmp(argv[1], "-h") == 0) 
+        {
+            printf("showing help : expected arguments  : [#DEPOSITORS, #WITHDRAWERS]\n");
+            exit(1);
+        }
+        else
+        {
+            printf("showing help : expected arguments  : [#DEPOSITORS, #WITHDRAWERS]\n");
+            errx(1, "wrong argument\n");
+        }
+    }
     else 
     {
         withdrawers_count = 1;
-        depositors_count  = 1;
+        depositors_count  = 1;   
     }
     
     printf("#depositors %d\n", depositors_count);
     printf("#withdrawers %d\n", withdrawers_count);
 
+    if (depositors_count < 1 || withdrawers_count < 1)
+    {
+        errx(2, "error : #DEPOSITORS and #WITHDRAWERS must be at least 1");
+    }
+    
     pthread_t withdrawers[withdrawers_count];
     pthread_t depositors[depositors_count];
 
     // init balance and balance_mutex
     balance = 150;
-    if (pthread_mutex_init(&balance_mutex, NULL)) 
-    {
-        errx(2, "error : creation of balance_mutex failed\n");
-    }
+    if ( pthread_mutex_init(&balance_mutex, NULL) ) { errx(3, "error : creation of balance_mutex failed\n"); }
 
     // init stop and stop_mutex
     stop = false;
-    if (pthread_mutex_init(&stop_mutex, NULL)) 
-    {
-        errx(2, "error : creation of stop_mutex failed\n");
-    }
+    if ( pthread_mutex_init(&stop_mutex, NULL) ) { errx(4, "error : creation of stop_mutex failed\n"); }
 
     for (int withdraw_index = 1; withdraw_index <= withdrawers_count; withdraw_index++)
     {
@@ -90,8 +96,8 @@ int main(int argc, char const *argv[])
         pthread_join(depositors[deposit_index], NULL);
     }
 
-    pthread_mutex_destroy(&balance_mutex);
-    pthread_mutex_destroy(&stop_mutex);
+    if ( pthread_mutex_destroy(&balance_mutex) ) { errx(5, "error : destroy balance_mutex"); }
+    if ( pthread_mutex_destroy(&stop_mutex) ) { errx(6, "error : destroy stop_mutex"); }
 
     if (stop)
     {

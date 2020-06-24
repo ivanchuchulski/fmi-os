@@ -54,7 +54,7 @@ void* withdraw(void* arg) {
             bank_account->balance -= TRANSACTION_AMMOUNT;
         pthread_mutex_unlock(&bank_account->mutex);
 
-        printf("banker_withdraw withdrew $%d from the bank\n", TRANSACTION_AMMOUNT);
+        printf("bank withdrawer 1 withdrew $%d from the bank\n", TRANSACTION_AMMOUNT);
 
         transactions_count++;
     }
@@ -73,7 +73,7 @@ void* deposit(void* arg) {
             bank_account->balance += TRANSACTION_AMMOUNT;
         pthread_mutex_unlock(&bank_account->mutex);
 
-        printf("banker_deposit deposited $%d to the bank\n", TRANSACTION_AMMOUNT);
+        printf("bank depositer 1 deposited $%d to the bank\n", TRANSACTION_AMMOUNT);
 
         transactions_count++;
     }

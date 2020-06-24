@@ -6,8 +6,6 @@ SRCS=main.c
 OBJS=$(subst .c,.o,$(SRCS))
 RM=rm -f
 
-# all: main
-
 foo: main.o
 	$(CC) $(CFLAGS) -o main main.c 
 
