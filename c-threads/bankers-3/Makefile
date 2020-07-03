@@ -12,7 +12,7 @@ foo: main.o
 clean:
 	$(RM) $(OBJS) main wrong wrong.o
 
-bar: alternative.o
+bar: wrong.o
 	$(CC) $(CFLAGS) -o wrong wrong.c 
 
 

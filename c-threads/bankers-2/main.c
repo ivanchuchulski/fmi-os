@@ -4,6 +4,7 @@
 #include <pthread.h>
 #include <err.h>
 #include <errno.h>
+#include <time.h>
 
 struct banker
 {
@@ -17,6 +18,7 @@ const int TRANSACTION_AMMOUNT = 50;
 
 void* withdraw(void* arg);
 void* deposit(void* arg);
+int msleep(long msec);
 
 int main(int argc, char const *argv[])
 {
@@ -89,7 +91,8 @@ void* withdraw(void* arg) {
     while (transactions_count < MAX_NUMBER_OF_TRANSACTIONS)
     {
         pthread_mutex_lock(banker->mutex);
-            sleep(1);
+            // sleep(1);
+            msleep(200);
             banker->balance -= TRANSACTION_AMMOUNT;
         pthread_mutex_unlock(banker->mutex);
 
@@ -110,7 +113,8 @@ void* deposit(void* arg) {
     while (transactions_count < MAX_NUMBER_OF_TRANSACTIONS)
     {
         pthread_mutex_lock(banker->mutex);
-            sleep(1);
+            // sleep(1);
+            msleep(200);
             banker->balance += TRANSACTION_AMMOUNT;
         pthread_mutex_unlock(banker->mutex);
 
@@ -122,4 +126,27 @@ void* deposit(void* arg) {
     free(banker);
 
     return NULL;
+}
+
+// source : https://stackoverflow.com/a/1157217
+int msleep(long msec)
+{
+    struct timespec ts;
+    int res;
+
+    if (msec < 0)
+    {
+        errno = EINVAL;
+        return -1;
+    }
+
+    ts.tv_sec = msec / 1000;
+    ts.tv_nsec = (msec % 1000) * 1000000;
+
+    do 
+    {
+        res = nanosleep(&ts, &ts);
+    } while (res && errno == EINTR);
+
+    return res;
 }

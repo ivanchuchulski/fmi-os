@@ -14,6 +14,7 @@ struct banker
 
 const int MAX_NUMBER_OF_TRANSACTIONS = 5;
 const int TRANSACTION_AMMOUNT = 50;
+const int INITIAL_BALANCE = 150;
 
 int balance;
 pthread_mutex_t balance_mutex;
@@ -23,6 +24,7 @@ pthread_mutex_t stop_mutex;
 
 void* withdraw(void* arg);
 void* deposit(void* arg);
+int msleep(long msec);
 
 int main(int argc, char const *argv[])
 {
@@ -38,12 +40,12 @@ int main(int argc, char const *argv[])
     {
         if (strcmp(argv[1], "-h") == 0) 
         {
-            printf("showing help : expected arguments  : [#DEPOSITORS, #WITHDRAWERS]\n");
+            printf("showing help : expected arguments  : [#WITHDRAWERS, #DEPOSITORS]\n");
             exit(1);
         }
         else
         {
-            printf("showing help : expected arguments  : [#DEPOSITORS, #WITHDRAWERS]\n");
+            printf("showing help : expected arguments  : [#WITHDRAWERS, #DEPOSITORS]\n");
             errx(1, "wrong argument\n");
         }
     }
@@ -53,8 +55,8 @@ int main(int argc, char const *argv[])
         depositors_count  = 1;   
     }
     
-    printf("#depositors %d\n", depositors_count);
     printf("#withdrawers %d\n", withdrawers_count);
+    printf("#depositors %d\n", depositors_count);
 
     if (depositors_count < 1 || withdrawers_count < 1)
     {
@@ -65,7 +67,7 @@ int main(int argc, char const *argv[])
     pthread_t depositors[depositors_count];
 
     // init balance and balance_mutex
-    balance = 150;
+    balance = INITIAL_BALANCE;
     if ( pthread_mutex_init(&balance_mutex, NULL) ) { errx(3, "error : creation of balance_mutex failed\n"); }
 
     // init stop and stop_mutex
@@ -99,19 +101,22 @@ int main(int argc, char const *argv[])
     if ( pthread_mutex_destroy(&balance_mutex) ) { errx(5, "error : destroy balance_mutex"); }
     if ( pthread_mutex_destroy(&stop_mutex) ) { errx(6, "error : destroy stop_mutex"); }
 
+    // pretty much to check if we are correct, when the is no bankrupt
+    int check_balance = INITIAL_BALANCE + (depositors_count - withdrawers_count) * MAX_NUMBER_OF_TRANSACTIONS * TRANSACTION_AMMOUNT;
     if (stop)
     {
         printf("bankrupt : remaining money : %d\n", balance);
     }
     else
     {
-        printf("remaining money : %d\n", balance);
+        printf("(remaining money) %d == %d (check)\n", balance, check_balance);
     }
 
     return 0;
 }
 
-void* withdraw(void* arg) {
+void* withdraw(void* arg) 
+{
     struct banker* banker = (struct banker*) arg;
     int transactions_count = 0;
     
@@ -139,7 +144,7 @@ void* withdraw(void* arg) {
             }
             else
             {
-                sleep(2);
+                msleep(200);
                 balance -= TRANSACTION_AMMOUNT;
             }            
 
@@ -155,7 +160,8 @@ void* withdraw(void* arg) {
     return NULL;
 }
 
-void* deposit(void* arg) {
+void* deposit(void* arg) 
+{
     struct banker* banker = (struct banker*) arg;
     int transactions_count = 0;
     
@@ -172,7 +178,7 @@ void* deposit(void* arg) {
                 }
             pthread_mutex_unlock(&stop_mutex);
 
-            sleep(2);
+            msleep(200);
             balance += TRANSACTION_AMMOUNT;
         pthread_mutex_unlock(&balance_mutex);
 
@@ -184,4 +190,27 @@ void* deposit(void* arg) {
     free(banker);
 
     return NULL;
+}
+
+// source : https://stackoverflow.com/a/1157217
+int msleep(long msec)
+{
+    struct timespec ts;
+    int res;
+
+    if (msec < 0)
+    {
+        errno = EINVAL;
+        return -1;
+    }
+
+    ts.tv_sec = msec / 1000;
+    ts.tv_nsec = (msec % 1000) * 1000000;
+
+    do 
+    {
+        res = nanosleep(&ts, &ts);
+    } while (res && errno == EINTR);
+
+    return res;
 }
