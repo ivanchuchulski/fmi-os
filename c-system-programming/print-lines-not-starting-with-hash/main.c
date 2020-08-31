@@ -4,10 +4,11 @@
 #include <unistd.h>
 #include <stdio.h>
 #include <errno.h>
+#include <stdbool.h>
 
 int main()
 {
-	const char *FILENAME = "a.txt";
+	const char *FILENAME = "b.txt";
 
 	char buff;
 	int fd = open(FILENAME, O_RDONLY);
@@ -18,6 +19,7 @@ int main()
 		return -1;
 	}
 
+	bool at_beggining_of_line = true;
 	int lenght = lseek(fd, 0, SEEK_END);
 
 	lseek(fd, 0, SEEK_SET);
@@ -26,7 +28,12 @@ int main()
 	{
 		read(fd, &buff, sizeof(buff));
 
-		if (buff == '#')
+		if (buff == '\n') 
+		{
+			at_beggining_of_line = true;
+			write(1, &buff, sizeof(buff));
+		}
+		else if (buff == '#' && at_beggining_of_line)
 		{
 			//skip to the end of line
 			while (1)
@@ -43,12 +50,14 @@ int main()
 
 				if (line_buff == '\n')
 				{
+					at_beggining_of_line = true;
 					break;
 				}
 			}
 		}
 		else 
 		{
+			at_beggining_of_line = false;
 			write(1, &buff, sizeof(buff));
 		}
 	}
